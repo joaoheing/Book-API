@@ -1,7 +1,9 @@
 ﻿using BookAPI.Model;
 using BookAPI.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace BookAPI.Controllers
@@ -48,9 +50,17 @@ namespace BookAPI.Controllers
             return RedirectToAction(nameof(GetById), new { id = newBook.Id });
         }
 
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<ActionResult> Delete(int id)
         {
+            ClaimsPrincipal user = User;
+
+            if (!user.Identity.IsAuthenticated)
+            {
+                return Unauthorized();
+            }
+
             Book book = await _bookRepository.Get(id);
             if (book == null)
             {
@@ -61,10 +71,18 @@ namespace BookAPI.Controllers
             return NoContent();
         }
 
-        [HttpPut]
+        [Authorize]
+        [HttpPut("{id}")]
         public async Task<ActionResult> Put(int id, [FromBody] Book book)
         {
-           if (id != book.Id)
+            ClaimsPrincipal user = User;
+
+            if (!user.Identity.IsAuthenticated)
+            {
+                return Unauthorized();
+            }
+
+            if (id != book.Id)
             {
                 return BadRequest();
             }
